@@ -1,15 +1,25 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { logout } from "../../store/authSlice"; // adjust path if needed
+
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/login"); // redirect to login page after logout
+  };
 
   return (
     <nav className="w-full z-40">
       <div className="flex justify-center font-sf-pro ">
-      <div className="header w-full px-10  lg:px-20 py-4 flex flex-row justify-between items-center">
-
+        <div className="header w-full px-10  lg:px-20 py-4 flex flex-row justify-between items-center">
 
           {/* Left: Logo */}
           <div className="text-xl font-bold text-[#333333]">
@@ -33,7 +43,15 @@ const Header = () => {
             <li><a href="/procedures" className="hover:text-blue-200 transition">Procedures</a></li>
             <li><a href="/testimonials" className="hover:text-blue-200 transition">Testimonials</a></li>
             <li><a href="/blog" className="hover:text-blue-200 transition">Blog</a></li>
-            <li><a href="/contact" className="hover:text-blue-200 transition">Contact</a></li>
+            {/* Change logout link to button to call handler */}
+            <li>
+              <button
+                onClick={handleLogout}
+                className="hover:text-blue-200 transition"
+              >
+                Logout
+              </button>
+            </li>
             <li><a href="/signup" className="hover:text-blue-200 transition">Signup</a></li>
           </ul>
         </div>
@@ -48,7 +66,17 @@ const Header = () => {
             <li><a href="/procedures" className="hover:text-blue-200 transition">Procedures</a></li>
             <li><a href="/testimonials" className="hover:text-blue-200 transition">Testimonials</a></li>
             <li><a href="/blog" className="hover:text-blue-200 transition">Blog</a></li>
-            <li><a href="/contact" className="hover:text-blue-200 transition">Contact</a></li>
+            <li>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="hover:text-blue-200 transition"
+              >
+                Logout
+              </button>
+            </li>
             <li><a href="/signup" className="hover:text-blue-200 transition">Signup</a></li>
           </ul>
         </div>
@@ -56,5 +84,6 @@ const Header = () => {
     </nav>
   );
 };
+
 
 export default Header;

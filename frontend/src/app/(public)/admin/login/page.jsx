@@ -2,36 +2,43 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginUserApi } from "../../../utils/axiosApi/authApi";
+import { loginAdminApi } from "../../../../utils/axiosApi/authApi"; // adjust path as needed
 
-export default function UserLogin() {
-  const [form, setForm] = useState({ email: "", password: "" });
+export default function AdminLoginPage() {
   const router = useRouter();
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const { user, accessToken, refreshToken } = await loginUserApi(form);
+      const { accessToken, refreshToken, admin } = await loginAdminApi(form);
 
-      // Set to localStorage
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("userAccessToken", accessToken);
-      localStorage.setItem("userRefreshToken", refreshToken);
+      // Store tokens
+      localStorage.setItem("adminAccessToken", accessToken);
+      localStorage.setItem("adminRefreshToken", refreshToken);
+      localStorage.setItem("admin", JSON.stringify(admin));
+      
 
-      // Optional: remove admin data if logged out from admin
-      localStorage.removeItem("admin");
-      localStorage.removeItem("adminAccessToken");
-      localStorage.removeItem("adminRefreshToken");
-
-      router.push("/"); // Go to home or dashboard
+      // Redirect to dashboard
+      router.push("/admin/");
     } catch (err) {
-      alert("Login failed");
+      console.error(err);
+      setError("Invalid credentials");
     }
   };
 
   return (
     <div className="max-w-md mx-auto py-20">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
+      <h2 className="text-2xl font-bold mb-4">Admin Login</h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
@@ -47,6 +54,9 @@ export default function UserLogin() {
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
         />
+
+        {error && <p className="text-red-500">{error}</p>}
+
         <button type="submit" className="w-full bg-green-600 text-white py-2">
           Login
         </button>

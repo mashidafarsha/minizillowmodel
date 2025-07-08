@@ -1,7 +1,7 @@
 import './globals.css';
-import Header from '../components/header';
 import Footer from '@/components/footer';
 import ClientProviders from './ClientProviders';
+import Header from '../components/header';
 
 export const metadata = {
   title: 'Create Next App',
@@ -12,11 +12,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="font-sans">
       <body className="flex flex-col min-h-screen w-full">
-        <Header />
         <ClientProviders>
+          <Header /> {/* ✅ now inside <Provider> */}
           <main className="flex-grow w-full">{children}</main>
+          <Footer />
         </ClientProviders>
-        <Footer />
       </body>
     </html>
   );

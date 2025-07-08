@@ -7,17 +7,39 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import PropertyModal from "@/components/modal";
 import { useRouter } from "next/navigation";
+import { getAllPropertiesApi, toggleBookmarkApi } from "@/utils/axiosApi/propertyApis"; // ✅ real API
 
 const Home = () => {
-
   const router = useRouter();
   const [loading, setLoading] = useState(true); // prevent flash of content
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [properties, setProperties] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("userAccessToken");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setLoading(false); // allow render
+      fetchProperties(); // ✅ load data
+    }
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      const res = await getAllPropertiesApi();
+      setProperties(res.properties || res); // adapt if API structure differs
+    } catch (err) {
+      console.error("Failed to fetch properties:", err);
+    }
+  };
 
   // ✅ Check auth token on load
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("userAccessToken");
+
     if (!token) {
       router.push("/login");
     } else {
@@ -35,27 +57,31 @@ const Home = () => {
     setSelectedProperty(null);
   };
 
-  // Sample property data
-  const properties = [
-    {
-      image: "/images/house.jpg",
-      price: "1100/mo",
-      beds: 3,
-      baths: 1,
-      sqft: "--",
-      address: "303 E Hickory St, Nevada, MO 64772",
-      agency: "Managed by Zillow",
-    },
-    {
-      image: "/images/house.jpg",
-      price: "109,900",
-      beds: 3,
-      baths: 2,
-      sqft: "768",
-      address: "458 E Elm St, Moundville, MO 64771",
-      agency: "CURTIS & SONS REALTY",
-    },
-  ];
+
+  
+
+
+
+  const handleBookmark = async (e, id) => {
+    e.stopPropagation(); // Prevent card click
+  
+    try {
+      const res = await toggleBookmarkApi(id);
+  
+      console.log("Bookmark response:", res); // For debugging
+  
+      // Safely check if 'favorites' is an array and includes the property ID
+      const isBookmarked = Array.isArray(res.favorites) && res.favorites.includes(id);
+  
+      setBookmarked(isBookmarked);
+  
+    } catch (err) {
+      console.error("Bookmark failed:", err);
+    }
+  };
+  
+
+
   return (
     <>
       <main className="flex flex-col items-center w-full overflow-hidden">
@@ -138,42 +164,59 @@ const Home = () => {
           <div className="flex overflow-x-auto gap-6 px-4 py-6 scrollbar-hide">
   {properties.map((property, idx) => (
     <div
-      key={idx}
+      key={property._id || idx}
       className="min-w-[300px] max-w-[300px] bg-white rounded-xl shadow-lg overflow-hidden relative cursor-pointer"
-      onClick={() => openModal(property)}
+      onClick={() => openModal(property._id)}
+
     >
-      {/* Card content (same as before) */}
+      {/* Property Image */}
       <div className="relative h-[180px]">
         <img
-          src={property.image}
+          src={property.images?.[0] || "/images/placeholder.jpg"}
           alt="Property"
           className="w-full h-full object-cover"
         />
         <span className="absolute top-2 left-2 bg-black/70 text-white text-[12px] px-2 py-1 rounded-md">
-          Covered front porch
+          {property.feature || "Covered front porch"}
         </span>
-        <button className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-          ❤️
-        </button>
+        <button
+  className={`absolute top-2 right-2 rounded-full p-1 ${
+    bookmarked ? "bg-red-500 text-white" : "bg-white"
+  } shadow`}
+  onClick={(e) => handleBookmark(e, property._id)}
+>
+  ❤️
+</button>
+
       </div>
+
+      {/* Property Info */}
       <div className="p-4 space-y-2">
-        <p className="text-[20px] font-bold text-gray-900">${property.price}</p>
-        <p className="text-[14px] text-gray-700">
-          <strong>{property.beds}</strong> bds · <strong>{property.baths}</strong> ba ·{" "}
-          <strong>{property.sqft}</strong> sqft - House for sale
+        <p className="text-[20px] font-bold text-gray-900">
+          ${property.price}
         </p>
-        <p className="text-[14px] text-gray-600">{property.address}</p>
-        <p className="text-[12px] text-blue-700">{property.agency}</p>
+        <p className="text-[14px] text-gray-700">
+          <strong>{property.beds || "--"}</strong> bds ·{" "}
+          <strong>{property.baths || "--"}</strong> ba ·{" "}
+          <strong>{property.sqft || "--"}</strong> sqft - House for sale
+        </p>
+        <p className="text-[14px] text-gray-600">
+          {property.address || property.location || "Unknown address"}
+        </p>
+        <p className="text-[12px] text-blue-700">
+          {property.agency || "Listed by SnapShare"}
+        </p>
       </div>
     </div>
   ))}
 </div>
 
-{/* Property Modal */}
-<PropertyModal
+
+          {/* Property Modal */}
+          <PropertyModal
   isOpen={isModalOpen}
   onClose={closeModal}
-  property={selectedProperty}
+  propertyId={selectedProperty}
 />
 
 
