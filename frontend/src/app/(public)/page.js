@@ -9,6 +9,7 @@ import PropertyModal from "@/components/modal";
 import { useRouter } from "next/navigation";
 import { getAllPropertiesApi, getCurrentUserApi, toggleBookmarkApi } from "@/utils/axiosApi/propertyApis"; // ✅ real API
 import { useSelector } from "react-redux";
+import toast from "react-hot-toast"; 
 
 const Home = () => {
   const router = useRouter();
@@ -47,18 +48,27 @@ const [user,setUser]=useState(null)
   };
 
   useEffect(() => {
+    fetchProperties();
+  
     const token = localStorage.getItem("userAccessToken");
-    if (!token) {
-      router.push("/login");
-      return;
+    if (token) {
+      fetchUser();
     }
-    Promise.all([fetchUser(), fetchProperties()]).then(() => setLoading(false));
+  
+    setLoading(false);
   }, []);
+  
 
   const openModal = (property) => {
+    if (!user) {
+      router.push("/login"); // ⬅️ redirect to login page
+      return;
+    }
     setSelectedProperty(property);
     setIsModalOpen(true);
   };
+  
+  
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -70,20 +80,34 @@ const [user,setUser]=useState(null)
 
 
 
+ 
+
   const handleBookmark = async (e, propertyId) => {
     e.stopPropagation();
   
+    if (!user) {
+      router.push("/login"); // optional redirect
+      return;
+    }
+  
     try {
       const res = await toggleBookmarkApi(propertyId);
-      console.log("Bookmark response:", res);
-  
       if (res.success && Array.isArray(res.favorites)) {
         setBookmarkedProperties(res.favorites);
+  
+        // Check if just added or removed
+        const isBookmarkedNow = res.favorites.includes(propertyId);
+        toast.success(
+          isBookmarkedNow ? "Added to favourites!" : "Removed from favourites."
+        );
       }
     } catch (err) {
       console.error("Bookmark failed:", err);
+      toast.error("Something went wrong.");
     }
   };
+  
+  
   
   
 
@@ -157,14 +181,23 @@ const [user,setUser]=useState(null)
         </span>
         <button
   className={`absolute top-2 right-2 rounded-full p-1 ${
-    bookmarkedProperties.includes(property._id)
+    user && bookmarkedProperties.includes(property._id)
       ? "bg-red-500 text-white"
-      : "bg-white"
+      : "bg-white text-gray-400"
   } shadow`}
-  onClick={(e) => handleBookmark(e, property._id)}
+  onClick={(e) => {
+    e.stopPropagation(); // prevent modal from opening
+    if (!user) {
+      router.push("/login"); // ⬅️ redirect if not logged in
+      return;
+    }
+    handleBookmark(e, property._id);
+  }}
 >
   ❤️
 </button>
+
+
 
 
       </div>

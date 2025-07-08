@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/sidebar";
 import { deletePropertyByIdApi, getPropertyByIdApi } from "@/utils/axiosApi/propertyApis";
-
+import toast from "react-hot-toast";
 export default function PropertyDetailsPage() {
   const { id } = useParams();
   const router = useRouter(); 
@@ -28,19 +28,24 @@ export default function PropertyDetailsPage() {
 
 
 
-  const handleDelete = async () => {
-    const confirm = window.confirm("Are you sure you want to delete this property?");
-    if (!confirm) return;
 
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this property?");
+    if (!confirmDelete) return;
+  
+    const deletingToast = toast.loading("Deleting property...");
+  
     try {
       await deletePropertyByIdApi(id);
-      alert("Property deleted successfully!");
-      router.push("/admin/properties"); // Go back to all properties
+      toast.success("Property deleted successfully!", { id: deletingToast });
+      router.push("/admin/properties");
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete property.");
+      toast.error("Failed to delete property.", { id: deletingToast });
     }
   };
+  
 
   if (loading) return <p className="p-6">Loading...</p>;
   if (!property) return <p className="p-6">Property not found.</p>;

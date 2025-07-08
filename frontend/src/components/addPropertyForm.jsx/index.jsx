@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { addPropertyApi } from "@/utils/axiosApi/propertyApis";
 
 const AddPropertyForm = () => {
@@ -31,10 +32,10 @@ const AddPropertyForm = () => {
     try {
       const res = await addPropertyApi(formData);
       console.log("Property added:", res);
-      alert("Property uploaded successfully!");
+      toast.success("Property uploaded successfully!");
     } catch (err) {
       console.error("Error uploading:", err);
-      alert("Upload failed!");
+      toast.error("Failed to upload property!");
     }
   };
   

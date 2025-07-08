@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/sidebar";
 import { getPropertyByIdApi, updatePropertyByIdApi } from "@/utils/axiosApi/propertyApis";
+import { toast } from "react-hot-toast";
 
 export default function EditPropertyPage() {
   const { id } = useParams();
@@ -49,11 +50,11 @@ export default function EditPropertyPage() {
     e.preventDefault();
     try {
       await updatePropertyByIdApi(id, formData);
-      alert("Property updated successfully!");
+      toast.success("Property updated successfully!");
       router.push(`/admin/properties/${id}`);
     } catch (err) {
       console.error("Update failed:", err);
-      alert("Failed to update property.");
+      toast.error("Failed to update property.");
     }
   };
 

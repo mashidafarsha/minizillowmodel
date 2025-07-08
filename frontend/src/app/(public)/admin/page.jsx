@@ -4,11 +4,21 @@ import AdminSidebar from "../../../components/admin/sidebar/index";
 import MetricCard from "../../../components/admin/metricCard/index";
 import { getAllPropertiesApi } from "@/utils/axiosApi/propertyApis";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
-
+  const router = useRouter();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const adminToken = localStorage.getItem("adminAccessToken");
+    const adminRole = localStorage.getItem("admin");
+
+    if (!adminToken || !adminRole) {
+      router.push("/admin/login");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchAllProperties = async () => {

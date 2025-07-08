@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginAdminApi } from "../../../../utils/axiosApi/authApi"; // adjust path as needed
 
@@ -13,6 +13,15 @@ export default function AdminLoginPage() {
   });
 
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminAccessToken");
+    const role = localStorage.getItem("admin");
+
+    if (token && role) {
+      router.push("/admin");
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
