@@ -124,7 +124,23 @@ exports.toggleBookmark = async (req, res) => {
   }
 };
 
-// exports.toggleBookmark = (req, res) => {
-//   console.log("✅ toggleBookmark hit");
-//   res.json({ message: "It works!" });
-// };
+// Get current logged-in user info
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId).select("-password").lean();
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error("Get current user error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+

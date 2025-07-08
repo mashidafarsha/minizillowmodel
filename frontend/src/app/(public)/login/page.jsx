@@ -3,32 +3,42 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUserApi } from "../../../utils/axiosApi/authApi";
+import { validateLogin } from "@/utils/validation/loginValidation";
+import toast from "react-hot-toast"; 
 
 export default function UserLogin() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const validationErrors = validateLogin(form);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error("Please fix the form errors.");
+      return;
+    }
+
     try {
       const { user, accessToken, refreshToken } = await loginUserApi(form);
 
-      // Set to localStorage
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("userAccessToken", accessToken);
       localStorage.setItem("userRefreshToken", refreshToken);
 
-      // Optional: remove admin data if logged out from admin
       localStorage.removeItem("admin");
       localStorage.removeItem("adminAccessToken");
       localStorage.removeItem("adminRefreshToken");
 
-      router.push("/"); // Go to home or dashboard
+      toast.success("Login successful!");
+      router.push("/");
     } catch (err) {
-      alert("Login failed");
+      toast.error("Login failed: Invalid email or password");
     }
   };
-
   return (
     <div className="max-w-md mx-auto py-20">
       <h2 className="text-2xl font-bold mb-4">Login</h2>

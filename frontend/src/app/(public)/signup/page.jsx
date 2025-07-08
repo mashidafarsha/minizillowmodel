@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { signupUser } from "../../../store/authSlice";
 import { useRouter } from "next/navigation";
+import { validateSignup } from "@/utils/validation/signupValidation";
+import toast from "react-hot-toast";
 
 export default function SignupPage() {
   const dispatch = useDispatch();
@@ -15,13 +17,25 @@ export default function SignupPage() {
     password: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const validationErrors = validateSignup(form);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error("Please fix the form errors.");
+      return;
+    }
+
     try {
       await dispatch(signupUser(form)).unwrap();
-      router.push("/login"); // redirect to login or home
+      toast.success("Signup successful! Please login.");
+      router.push("/login");
     } catch (err) {
-      alert("Signup failed");
+      toast.error("Signup failed. Please try again.");
     }
   };
 

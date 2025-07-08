@@ -5,7 +5,8 @@ const {
     signupUser,
     loginUser,
     toggleBookmark,
-    refreshToken
+    refreshToken,
+    getCurrentUser
 
 } = require('../controllers/userController');
 const { auth } = require('../middleware/auth'); // ✅ named import
@@ -18,6 +19,7 @@ router.post('/signup', signupUser);
 router.post('/login', loginUser);
 router.post('/refresh', refreshToken);
 router.post("/toggle-bookmark/:propertyId", auth, toggleBookmark);
+router.get("/me", auth, getCurrentUser);
 
 
 module.exports = router;

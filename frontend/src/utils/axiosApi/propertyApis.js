@@ -50,3 +50,7 @@ export const toggleBookmarkApi = async (propertyId) => {
   return res.data;
 };
 
+export const getCurrentUserApi = async () => {
+  const res = await axiosInstance.get("/user/me");
+  return res.data;
+};

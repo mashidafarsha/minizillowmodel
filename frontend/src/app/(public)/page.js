@@ -7,7 +7,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import PropertyModal from "@/components/modal";
 import { useRouter } from "next/navigation";
-import { getAllPropertiesApi, toggleBookmarkApi } from "@/utils/axiosApi/propertyApis"; // ✅ real API
+import { getAllPropertiesApi, getCurrentUserApi, toggleBookmarkApi } from "@/utils/axiosApi/propertyApis"; // ✅ real API
+import { useSelector } from "react-redux";
 
 const Home = () => {
   const router = useRouter();
@@ -16,35 +17,42 @@ const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [properties, setProperties] = useState([]);
+const [user,setUser]=useState(null)
+  const [bookmarkedProperties, setBookmarkedProperties] = useState([]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("userAccessToken");
-    if (!token) {
-      router.push("/login");
-    } else {
-      setLoading(false); // allow render
-      fetchProperties(); // ✅ load data
+  
+
+  const fetchUser = async () => {
+    try {
+      const userData = await getCurrentUserApi();
+      setUser(userData);
+      if (Array.isArray(userData.favorites)) {
+        setBookmarkedProperties(userData.favorites);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user:", err);
+   
     }
-  }, []);
+  };
+
+
 
   const fetchProperties = async () => {
     try {
       const res = await getAllPropertiesApi();
-      setProperties(res.properties || res); // adapt if API structure differs
+      setProperties(res.properties || res); 
     } catch (err) {
       console.error("Failed to fetch properties:", err);
     }
   };
 
-  // ✅ Check auth token on load
   useEffect(() => {
     const token = localStorage.getItem("userAccessToken");
-
     if (!token) {
       router.push("/login");
-    } else {
-      setLoading(false); // allow render
+      return;
     }
+    Promise.all([fetchUser(), fetchProperties()]).then(() => setLoading(false));
   }, []);
 
   const openModal = (property) => {
@@ -62,23 +70,21 @@ const Home = () => {
 
 
 
-  const handleBookmark = async (e, id) => {
-    e.stopPropagation(); // Prevent card click
+  const handleBookmark = async (e, propertyId) => {
+    e.stopPropagation();
   
     try {
-      const res = await toggleBookmarkApi(id);
+      const res = await toggleBookmarkApi(propertyId);
+      console.log("Bookmark response:", res);
   
-      console.log("Bookmark response:", res); // For debugging
-  
-      // Safely check if 'favorites' is an array and includes the property ID
-      const isBookmarked = Array.isArray(res.favorites) && res.favorites.includes(id);
-  
-      setBookmarked(isBookmarked);
-  
+      if (res.success && Array.isArray(res.favorites)) {
+        setBookmarkedProperties(res.favorites);
+      }
     } catch (err) {
       console.error("Bookmark failed:", err);
     }
   };
+  
   
 
 
@@ -117,37 +123,7 @@ const Home = () => {
             </div>
           </div>
         </section>
-        {/* Horizontal Services Section */}
-        {/* <section className="bg-white w-full py-4">
-          <div className="w-full overflow-x-auto whitespace-nowrap scrollbar-hide px-4 sm:px-8">
-            <div className="inline-flex items-center gap-6 min-w-max">
-              {[
-                "Cardiology",
-                "Pediatrics",
-                "Dermatology",
-                "Gastroenterology",
-                "Cardiology",
-                "Cardiology",
-                "Pediatrics",
-                "Dermatology",
-                "Gastroenterology",
-                "Cardiology",
-              ].map((service, index, arr) => (
-                <div
-                  key={index}
-                  className="flex items-center text-[#333] text-[18px] font-medium"
-                >
-                  <span>{service}</span>
-                  {index < arr.length - 1 && (
-                    <span className="mx-3 text-[24px] text-[#333]">•</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section> */}
-
-        {/* our process section */}
+       
 
         <section className="flex flex-col items-center w-full bg-[#F9F7FE] px-4 sm:px-6 py-12 lg:py-28">
           <p className="font-semibold text-[22px] lg:text-[34px] mb-16 leading-6 lg:leading-10 text-center text-[#333]">
@@ -181,12 +157,15 @@ const Home = () => {
         </span>
         <button
   className={`absolute top-2 right-2 rounded-full p-1 ${
-    bookmarked ? "bg-red-500 text-white" : "bg-white"
+    bookmarkedProperties.includes(property._id)
+      ? "bg-red-500 text-white"
+      : "bg-white"
   } shadow`}
   onClick={(e) => handleBookmark(e, property._id)}
 >
   ❤️
 </button>
+
 
       </div>
 
