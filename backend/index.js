@@ -11,7 +11,7 @@ const app = express();
 
 // ✅ Allow Vercel frontend to access backend
 app.use(cors({
-  origin: "https://minizillowmodel.vercel.app/", // ✅ Replace this
+  origin: "https://minizillowmodel-16ml.vercel.app/", // ✅ Replace this
   credentials: true
 }));
 
