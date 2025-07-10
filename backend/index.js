@@ -9,17 +9,20 @@ dotenv.config();
 connectDB();
 const app = express();
 
-// Middleware
-app.use(cors());
+// ✅ Allow Vercel frontend to access backend
+app.use(cors({
+  origin: "https://minizillowmodel.vercel.app/", // ✅ Replace this
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Routes
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 
-// MongoDB Connection
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
