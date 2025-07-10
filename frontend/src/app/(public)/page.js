@@ -128,7 +128,7 @@ const Home = () => {
                   onClick={handleClick}
                   className="bg-[#00A7B6] text-white font-semibold rounded-xl px-8 py-4 shadow-lg hover:bg-[#008c99] transition text-lg"
                 >
-                  Let's Get Started
+                  Let&apos;s Get Started
                 </button>
               </div>
             </div>
@@ -234,7 +234,7 @@ const Home = () => {
                 </h2>
 
                 <p className=" text-black text-[14px]  font-[400] leading-6  mt-2 sm:mt-1 xl:mt-2 2xl:mt-2 ">
-                  Search and save a few homes you like and we'll find
+                  Search and save a few homes you like and we will find
                   recommendations for you.
                 </p>
                 <div className="flex flex-col md:flex-row gap-4">
