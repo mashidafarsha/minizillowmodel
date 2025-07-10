@@ -11,10 +11,12 @@ const app = express();
 
 // ✅ Allowed Origins
 const allowedOrigins = [
-  "https://minizillowmodel-16ml.vercel.app", // deployed frontend
-  "http://localhost:3000",                   // local dev
-  "http://127.0.0.1:3000"                    // alternative localhost
+  "https://minizillowmodel-16ml.vercel.app",
+  "https://minizillowmodel-16ml-dsgfrcco1-mashidas-projects-621f1c73.vercel.app", // 👈 Add this
+  "http://localhost:3000",
+  "http://127.0.0.1:3000"
 ];
+
 
 // ✅ CORS Middleware
 app.use(cors({
