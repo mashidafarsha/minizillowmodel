@@ -5,23 +5,49 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 
 dotenv.config();
-
 connectDB();
+
 const app = express();
 
-// ✅ Allow Vercel frontend to access backend
+// ✅ Allowed Origins
+const allowedOrigins = [
+  "https://minizillowmodel-16ml.vercel.app", // deployed frontend
+  "http://localhost:3000",                   // local dev
+  "http://127.0.0.1:3000"                    // alternative localhost
+];
+
+// ✅ CORS Middleware
 app.use(cors({
-  origin: "https://minizillowmodel-16ml.vercel.app/", // ✅ Replace this
-  credentials: true
+  origin: function (origin, callback) {
+    console.log("🔍 Incoming origin:", origin);
+
+    // Allow requests with no origin (like Postman or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      const msg = `❌ CORS blocked for origin: ${origin}`;
+      console.warn(msg);
+      return callback(new Error(msg), false);
+    }
+  },
+  credentials: true,
 }));
 
+// ✅ Body Parser Middleware
 app.use(express.json());
 
-// Routes
+// ✅ Routes
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/user", require("./routes/user"));
 
-// Start server
+// ✅ Health Check Route (Optional)
+app.get("/", (req, res) => {
+  res.send("🌍 Backend running!");
+});
+
+// ✅ Server Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);

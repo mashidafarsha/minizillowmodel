@@ -10,14 +10,21 @@ axiosInstance.interceptors.request.use((config) => {
     localStorage.getItem("userAccessToken") ||
     localStorage.getItem("accessToken");
 
-  console.log("🔐 Attaching token:", token);
+  const isPublicRoute =
+    config.url.includes("/user/signup") ||
+    config.url.includes("/user/login") ||
+    config.url.includes("/admin/login");
 
-  if (token) {
+  if (!isPublicRoute && token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("🔐 Attaching token:", token);
+  } else {
+    console.log("🚫 No token attached to public route:", config.url);
   }
 
   return config;
 });
+
 
 axiosInstance.interceptors.response.use(
   (res) => res,
