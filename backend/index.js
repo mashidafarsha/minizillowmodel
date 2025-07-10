@@ -10,32 +10,34 @@ connectDB();
 const app = express();
 
 // ✅ Allowed Origins
+
+
+// Allowlist of trusted origins
 const allowedOrigins = [
-  "https://minizillowmodel-16ml.vercel.app",
-  "https://minizillowmodel-16ml-dsgfrcco1-mashidas-projects-621f1c73.vercel.app", // 👈 Add this
   "http://localhost:3000",
-  "http://127.0.0.1:3000"
+  "https://minizillowmodel-16ml.vercel.app",
+  "https://minizillowmodel-16ml-dsgfrcco1-mashidas-projects-621f1c73.vercel.app",
 ];
 
+// Dynamic CORS config
+const corsOptionsDelegate = function (req, callback) {
+  const origin = req.header("Origin");
+  console.log("🔍 Incoming Origin:", origin);
 
-// ✅ CORS Middleware
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log("🔍 Incoming origin:", origin);
+  if (!origin || allowedOrigins.includes(origin)) {
+    callback(null, {
+      origin: origin || true, // allow server-side tools like Postman (no origin)
+      credentials: true,
+    });
+  } else {
+    console.warn("❌ CORS blocked for:", origin);
+    callback(new Error("Not allowed by CORS"));
+  }
+};
 
-    // Allow requests with no origin (like Postman or curl)
-    if (!origin) return callback(null, true);
+// Apply CORS middleware
+app.use(cors(corsOptionsDelegate));
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      const msg = `❌ CORS blocked for origin: ${origin}`;
-      console.warn(msg);
-      return callback(new Error(msg), false);
-    }
-  },
-  credentials: true,
-}));
 
 // ✅ Body Parser Middleware
 app.use(express.json());
