@@ -151,7 +151,7 @@ const Home = () => {
             {properties.slice(0, 4).map((property, idx) => (
               <div
                 key={property._id || idx}
-                className={`inline-block min-w-[350px] max-w-[350px] bg-white rounded-xl shadow-lg overflow-hidden relative cursor-pointer ${
+                className={`inline-block lg:min-w-[350px] min-w-[300px] max-w-[300px] lg:max-w-[350px] bg-white rounded-xl shadow-lg overflow-hidden relative cursor-pointer ${
                   idx === 0 ? "ml-0" : "ml-6"
                 }`}
                 onClick={() => openModal(property._id)}
@@ -208,10 +208,12 @@ const Home = () => {
 
           {/* Property Modal */}
           <PropertyModal
-            isOpen={isModalOpen}
-            onClose={closeModal}
-            propertyId={selectedProperty}
-          />
+  isOpen={isModalOpen}
+  onClose={closeModal}
+  propertyId={selectedProperty}
+  user={user}
+/>
+
 
           {/* Learn More Button */}
           <button
