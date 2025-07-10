@@ -1,23 +1,25 @@
 const User = require("../models/User");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Property = require("../models/Property");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../utils/tokenUtils");
 
-
-console.log("✅ userController loaded");
+// user signup
 
 exports.signupUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   const existing = await User.findOne({ email });
-  if (existing) return res.status(400).json({ msg: 'User already exists' });
+  if (existing) return res.status(400).json({ msg: "User already exists" });
 
   const hashed = await bcrypt.hash(password, 10);
   const user = new User({ name, email, password: hashed });
 
   await user.save();
 
-  // ✅ Pass the full user object
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
@@ -36,18 +38,18 @@ exports.signupUser = async (req, res) => {
   });
 };
 
-
+// user login
 
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ msg: 'Invalid credentials' });
+  if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
+  if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-  const accessToken = generateAccessToken(user); // ✅ full user passed
+  const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
   user.refreshToken = refreshToken;
@@ -65,8 +67,6 @@ exports.loginUser = async (req, res) => {
   });
 };
 
-
-
 exports.refreshToken = async (req, res) => {
   const { token } = req.body;
   if (!token) return res.sendStatus(401);
@@ -77,33 +77,22 @@ exports.refreshToken = async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user || user.refreshToken !== token) return res.sendStatus(403);
 
-    // Generate new tokens
     const accessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
 
-    // Save the new refresh token in DB
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    // Send both new tokens to client
     res.json({ accessToken, refreshToken: newRefreshToken });
-
   } catch (err) {
     res.sendStatus(403);
   }
 };
 
-
-
 exports.toggleBookmark = async (req, res) => {
-
-  console.log("➡️ ToggleBookmark route hit");
-
   try {
     const { propertyId } = req.params;
     const userId = req.user.id;
-
-    console.log(`Toggle bookmark hit for user ${userId}, property ${propertyId}`);
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -111,20 +100,20 @@ exports.toggleBookmark = async (req, res) => {
     const index = user.favorites.indexOf(propertyId);
 
     if (index > -1) {
-      user.favorites.splice(index, 1); // remove
+      user.favorites.splice(index, 1);
     } else {
-      user.favorites.push(propertyId); // add
+      user.favorites.push(propertyId);
     }
 
     await user.save();
     res.json({ success: true, favorites: user.favorites });
   } catch (err) {
-    console.error("Toggle bookmark error:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-// Get current logged-in user info
+// Get current logged-in user
+
 exports.getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -137,10 +126,42 @@ exports.getCurrentUser = async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    console.error("Get current user error:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+exports.rateProperty = async (req, res) => {
+  const { id } = req.params;
+  const { rating } = req.body;
+  const userId = req.user.id;
 
+  if (rating < 1 || rating > 5) {
+    return res.status(400).json({ message: "Rating must be between 1 and 5." });
+  }
 
+  try {
+    const property = await Property.findById(id);
+    if (!property)
+      return res.status(404).json({ message: "Property not found" });
+
+    const existing = property.ratings.find((r) => r.user.toString() === userId);
+
+    if (existing) {
+      existing.rating = rating;
+    } else {
+      property.ratings.push({ user: userId, rating });
+    }
+
+    const total = property.ratings.reduce((acc, r) => acc + r.rating, 0);
+    property.averageRating = total / property.ratings.length;
+
+    await property.save();
+    res.status(200).json({
+      success: true,
+      message: "Rating submitted",
+      averageRating: property.averageRating,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

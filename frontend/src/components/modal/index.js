@@ -1,11 +1,44 @@
 "use client";
 import { Dialog } from "@headlessui/react";
+import { FaStar } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { getPropertyByIdApi } from "@/utils/axiosApi/propertyApis"; // ✅ use your real API
+import {
+  getPropertyByIdApi,
+  ratePropertyApi,
+} from "@/utils/axiosApi/propertyApis";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const PropertyModal = ({ isOpen, onClose, propertyId }) => {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const user = useSelector((state) => state.auth.user);
+  const router = useRouter();
+
+  const [userRating, setUserRating] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
+
+  useEffect(() => {
+    if (property?.averageRating) setAvgRating(property.averageRating);
+  }, [property]);
+
+  const handleRate = async (value) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const res = await ratePropertyApi(propertyId, value);
+      toast.success("Rating submitted!");
+      setUserRating(value);
+      setAvgRating(res.averageRating);
+    } catch (err) {
+      toast.error("Failed to submit rating.");
+    }
+  };
 
   useEffect(() => {
     if (!propertyId) return;
@@ -14,7 +47,9 @@ const PropertyModal = ({ isOpen, onClose, propertyId }) => {
       setLoading(true);
       try {
         const res = await getPropertyByIdApi(propertyId);
-        setProperty(res.property || res);
+        const fetchedProperty = res.property || res;
+        setProperty(fetchedProperty);
+        setAvgRating(fetchedProperty.averageRating || 0);
       } catch (err) {
         console.error("Failed to fetch property:", err);
       } finally {
@@ -25,14 +60,24 @@ const PropertyModal = ({ isOpen, onClose, propertyId }) => {
     fetchProperty();
   }, [propertyId]);
 
+  useEffect(() => {
+    if (!property || !user) return;
+
+    const existingRating = property.ratings?.find(
+      (r) => r.user === user._id || r.user?._id === user._id
+    );
+    setUserRating(existingRating?.rating || 0);
+  }, [property, user?._id]);
+
   if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+        aria-hidden="true"
+      />
 
-      {/* Modal content wrapper */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden relative">
           <button
@@ -48,30 +93,48 @@ const PropertyModal = ({ isOpen, onClose, propertyId }) => {
             <div className="p-10 text-center text-lg">Property not found.</div>
           ) : (
             <div className="flex flex-col md:flex-row">
-              {/* Left: Image */}
-              <div className="w-full md:w-1/2 h-[250px] md:h-auto">
-                <img
-                  src={property.images?.[0] || "/images/placeholder.jpg"}
-                  alt="Property"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full md:w-1/2 grid grid-cols-2 gap-2 h-[300px]">
+                <div className="col-span-1 row-span-2 h-full overflow-hidden rounded-lg">
+                  <img
+                    src={property.images?.[0] || "/images/placeholder.jpg"}
+                    alt="Main"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="col-span-1 h-[145px] overflow-hidden rounded-lg">
+                  <img
+                    src={property.images?.[1] || "/images/placeholder.jpg"}
+                    alt="Image 2"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="col-span-1 h-[145px] overflow-hidden rounded-lg">
+                  <img
+                    src={property.images?.[2] || "/images/placeholder.jpg"}
+                    alt="Image 3"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
 
-              {/* Right: Details */}
               <div className="p-6 md:w-1/2">
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  ${property.price}
+                  AED {property.price}
                 </h2>
-                <p className="text-sm text-gray-700 mb-2">
-                  <strong>{property.beds || "--"}</strong> bds ·{" "}
-                  <strong>{property.baths || "--"}</strong> ba ·{" "}
-                  <strong>{property.sqft || "--"}</strong> sqft
+                <p className="text-[14px] text-gray-700">
+                  <strong>{property.title || "--"}</strong> , · <br />
+                  <strong>{property.category || "--"}</strong>
+                  <br />
+                  <strong>{property.description || "--"}</strong> , ·{" "}
                 </p>
-                <p className="text-gray-600 mb-1">
-                  {property.address || property.location}
+
+                <p className="text-[14px] text-gray-600">
+                  {property.address || property.location || "Unknown address"}
                 </p>
-                <p className="text-sm text-blue-700 font-medium">
-                  {property.agency || "Listed by SnapShare"}
+                <p className="text-[12px] text-blue-700">
+                  {property.agency || "Listed by Zillow"}
                 </p>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -85,6 +148,24 @@ const PropertyModal = ({ isOpen, onClose, propertyId }) => {
               </div>
             </div>
           )}
+          {/* Rating UI */}
+          <div className=" ml-7 mb-4">
+            <p className="text-sm text-gray-600 mb-1">Your Rating:</p>
+            <div className="flex space-x-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <FaStar
+                  key={star}
+                  onClick={() => handleRate(star)}
+                  className={`cursor-pointer text-xl ${
+                    star <= userRating ? "text-yellow-400" : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Average Rating: <strong>{avgRating.toFixed(1)}</strong> / 5
+            </p>
+          </div>
         </Dialog.Panel>
       </div>
     </Dialog>

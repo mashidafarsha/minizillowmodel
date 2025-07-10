@@ -10,8 +10,6 @@ export const signupUserApi = async (data) => {
   return response.data;
 };
 
-
-// 🛡️ Admin Auth
 export const loginAdminApi = async (data) => {
   const response = await axiosInstance.post("/admin/login", data);
   return response.data;

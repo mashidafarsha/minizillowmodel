@@ -97,20 +97,23 @@ body {
 }
 
 
-/* Hide Scrollbar */
-.hide-scroll {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
-.hide-scroll::-webkit-scrollbar {
-  display: none;
-}
 
 @layer components {
   .flex-center {
     @apply flex items-center justify-center;
   }
 }
+
+
+
+.scrollbar-hide {
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; 
+}
+
 
 

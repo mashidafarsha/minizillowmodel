@@ -3,25 +3,32 @@
 import "./style.css";
 import { useEffect, useRef, useState } from "react";
 import { FiSearch } from "react-icons/fi";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import PropertyModal from "@/components/modal";
 import { useRouter } from "next/navigation";
-import { getAllPropertiesApi, getCurrentUserApi, toggleBookmarkApi } from "@/utils/axiosApi/propertyApis"; // ✅ real API
+import {
+  getAllPropertiesApi,
+  getCurrentUserApi,
+  toggleBookmarkApi,
+} from "@/utils/axiosApi/propertyApis"; 
 import { useSelector } from "react-redux";
-import toast from "react-hot-toast"; 
+import toast from "react-hot-toast";
 
 const Home = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true); // prevent flash of content
+  const [loading, setLoading] = useState(true); 
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [properties, setProperties] = useState([]);
-const [user,setUser]=useState(null)
+  const [user, setUser] = useState(null);
   const [bookmarkedProperties, setBookmarkedProperties] = useState([]);
 
-  
+  const handleClick = () => {
+    router.push("/allProperties");
+  };
 
   const fetchUser = async () => {
     try {
@@ -32,16 +39,13 @@ const [user,setUser]=useState(null)
       }
     } catch (err) {
       console.error("Failed to fetch user:", err);
-   
     }
   };
-
-
 
   const fetchProperties = async () => {
     try {
       const res = await getAllPropertiesApi();
-      setProperties(res.properties || res); 
+      setProperties(res.properties || res);
     } catch (err) {
       console.error("Failed to fetch properties:", err);
     }
@@ -49,53 +53,43 @@ const [user,setUser]=useState(null)
 
   useEffect(() => {
     fetchProperties();
-  
+
     const token = localStorage.getItem("userAccessToken");
     if (token) {
       fetchUser();
     }
-  
+
     setLoading(false);
   }, []);
-  
 
   const openModal = (property) => {
     if (!user) {
-      router.push("/login"); // ⬅️ redirect to login page
+      router.push("/login"); 
       return;
     }
     setSelectedProperty(property);
     setIsModalOpen(true);
   };
-  
-  
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedProperty(null);
   };
 
-
-  
-
-
-
- 
-
   const handleBookmark = async (e, propertyId) => {
     e.stopPropagation();
-  
+
     if (!user) {
-      router.push("/login"); // optional redirect
+      router.push("/login");
       return;
     }
-  
+
     try {
       const res = await toggleBookmarkApi(propertyId);
       if (res.success && Array.isArray(res.favorites)) {
         setBookmarkedProperties(res.favorites);
-  
-        // Check if just added or removed
+
+        
         const isBookmarkedNow = res.favorites.includes(propertyId);
         toast.success(
           isBookmarkedNow ? "Added to favourites!" : "Removed from favourites."
@@ -106,11 +100,6 @@ const [user,setUser]=useState(null)
       toast.error("Something went wrong.");
     }
   };
-  
-  
-  
-  
-
 
   return (
     <>
@@ -118,40 +107,37 @@ const [user,setUser]=useState(null)
         {/* Hero Section */}
 
         <section
-          className="flex flex-row justify-center items-center min-h-[408px] relative w-full bg-cover bg-no-repeat"
+          className="flex justify-center items-center min-h-[408px] w-full bg-cover bg-no-repeat px-4 text-center lg:text-left"
           style={{
             backgroundImage:
-              "url('/svg/images/home/BackgroundMainBanner.webp')",
+              "url('https://www.livingroomre.com/wp-content/uploads/2023/07/Blog-7.3.23-e1688432733221.jpg')",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}
         >
-          <div className="hidden lg:flex flex-row gap-[40px] justify-center">
-            <div className="flex flex-col justify-center w-[440px] xl:w-[520px] h-[352px] -translate-x-80 relative top-5">
-              <h1 className="text-white font-[900] text-[60px] leading-[72px] mb-8">
-                Agents. Tours. <br />
+          <div className="flex flex-col lg:flex-row gap-6 justify-center items-center max-w-5xl w-full">
+            <div className="flex flex-col justify-center w-full max-w-xl h-auto lg:h-[352px] lg:mr-96">
+              <h1 className="text-green-950 font-bold text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6">
+                Agents. Tours. <br className="hidden sm:block" />
                 Loans. Homes.
               </h1>
 
-              {/* Search Box */}
-              <div className="flex items-center bg-white rounded-xl overflow-hidden h-16 shadow-lg w-[90%] sm:w-[80%] md:w-[450px] ml-0">
-                <input
-                  type="text"
-                  placeholder="Enter an address, neighborhood, city, or ZIP code"
-                  className="flex-1 px-4 py-3 text-gray-800 focus:outline-none text-[16px]"
-                />
-                <button className="bg-white hover:bg-[#dde0e2] text-black p-3 px-4">
-                  <FiSearch size={20} />
+             
+              <div className="flex items-center ml-20 lg:ml-0  rounded-xl overflow-hidden h-16 shadow-lg  ">
+                <button
+                  onClick={handleClick}
+                  className="bg-[#00A7B6] text-white font-semibold rounded-xl px-8 py-4 shadow-lg hover:bg-[#008c99] transition text-lg"
+                >
+                  Let's Get Started
                 </button>
               </div>
             </div>
           </div>
         </section>
-       
 
-        <section className="flex flex-col items-center w-full bg-[#F9F7FE] px-4 sm:px-6 py-12 lg:py-28">
+        <section className="flex flex-col items-center w-full bg-[#F9F7FE] px-4 sm:px-6 py-16 lg:py-16">
           <p className="font-semibold text-[22px] lg:text-[34px] mb-16 leading-6 lg:leading-10 text-center text-[#333]">
-            Highlight Services
+            Our Recent Properties
           </p>
 
           <p className="text-[20px] sm:text-[24px] font-semibold text-[#333] text-center mb-10">
@@ -161,93 +147,84 @@ const [user,setUser]=useState(null)
           </p>
 
           {/* Scrollable Card Section */}
-          <div className="flex overflow-x-auto gap-6 px-4 py-6 scrollbar-hide">
-  {properties.map((property, idx) => (
-    <div
-      key={property._id || idx}
-      className="min-w-[300px] max-w-[300px] bg-white rounded-xl shadow-lg overflow-hidden relative cursor-pointer"
-      onClick={() => openModal(property._id)}
+          <div className="flex overflow-x-auto whitespace-nowrap scroll-smooth gap-6 px-4 py-6 scrollbar-hide w-full max-w-6xl">
+            {properties.slice(0, 4).map((property, idx) => (
+              <div
+                key={property._id || idx}
+                className={`inline-block min-w-[350px] max-w-[350px] bg-white rounded-xl shadow-lg overflow-hidden relative cursor-pointer ${
+                  idx === 0 ? "ml-0" : "ml-6"
+                }`}
+                onClick={() => openModal(property._id)}
+              >
+                {/* Property Image */}
+                <div className="relative h-[180px]">
+                  <img
+                    src={property.images?.[0] || "/images/placeholder.jpg"}
+                    alt="Property"
+                    className="w-full h-full object-cover"
+                  />
 
-    >
-      {/* Property Image */}
-      <div className="relative h-[180px]">
-        <img
-          src={property.images?.[0] || "/images/placeholder.jpg"}
-          alt="Property"
-          className="w-full h-full object-cover"
-        />
-        <span className="absolute top-2 left-2 bg-black/70 text-white text-[12px] px-2 py-1 rounded-md">
-          {property.feature || "Covered front porch"}
-        </span>
-        <button
-  className={`absolute top-2 right-2 rounded-full p-1 ${
-    user && bookmarkedProperties.includes(property._id)
-      ? "bg-red-500 text-white"
-      : "bg-white text-gray-400"
-  } shadow`}
-  onClick={(e) => {
-    e.stopPropagation(); // prevent modal from opening
-    if (!user) {
-      router.push("/login"); // ⬅️ redirect if not logged in
-      return;
-    }
-    handleBookmark(e, property._id);
-  }}
->
-  ❤️
-</button>
+                  <button
+                    className="absolute top-2 right-2 rounded-full p-1 bg-zinc-100 shadow"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!user) {
+                        router.push("/login");
+                        return;
+                      }
+                      handleBookmark(e, property._id);
+                    }}
+                  >
+                    {user && bookmarkedProperties.includes(property._id) ? (
+                      <AiFillHeart className="text-red-500 text-[20px]" />
+                    ) : (
+                      <AiOutlineHeart className="text-gray-400 text-[20px]" />
+                    )}
+                  </button>
+                </div>
 
+                {/* Property Info */}
+                <div className="p-4 space-y-2">
+                  <p className="text-[20px] font-bold text-gray-900">
+                    AED {property.price}
+                  </p>
+                  <p className="text-[14px] text-gray-700">
+                    <strong>{property.title || "--"}</strong> , · <br />
+                  </p>
+                  <p className="text-[14px] text-gray-700">
+                    <strong>{property.category || "--"}</strong> , · <br />
+                  </p>
 
-
-
-      </div>
-
-      {/* Property Info */}
-      <div className="p-4 space-y-2">
-        <p className="text-[20px] font-bold text-gray-900">
-          ${property.price}
-        </p>
-        <p className="text-[14px] text-gray-700">
-          <strong>{property.beds || "--"}</strong> bds ·{" "}
-          <strong>{property.baths || "--"}</strong> ba ·{" "}
-          <strong>{property.sqft || "--"}</strong> sqft - House for sale
-        </p>
-        <p className="text-[14px] text-gray-600">
-          {property.address || property.location || "Unknown address"}
-        </p>
-        <p className="text-[12px] text-blue-700">
-          {property.agency || "Listed by SnapShare"}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
-
+                  <p className="text-[14px] text-gray-600">
+                    {property.address || property.location || "Unknown address"}
+                  </p>
+                  <p className="text-[12px] text-blue-700">
+                    {property.agency || "Listed by Zillow"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Property Modal */}
           <PropertyModal
-  isOpen={isModalOpen}
-  onClose={closeModal}
-  propertyId={selectedProperty}
-/>
-
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            propertyId={selectedProperty}
+          />
 
           {/* Learn More Button */}
-          <button className="mt-10 bg-[#00A7B6] text-white text-[18px] font-medium py-2.5 px-6 rounded-full hover:shadow-lg transition-all">
-            Learn more
+          <button
+            onClick={() => router.push("/allProperties")}
+            className="mt-10 bg-[#00A7B6] text-white text-[18px] font-medium py-2.5 px-6 rounded-full hover:shadow-lg transition-all"
+          >
+            All Properties
           </button>
         </section>
 
         {/* Stand out Yourself section */}
 
         <section className="home-section-4 flex flex-col items-center w-full lg:p-28 px-6 py-12">
-          <motion.p
-            id="title"
-            className=" mb-8 lg:mb-16 font-semibold lg:text-[34px] text-[22px] lg:leading-10 leading-6"
-            // {...slideInFromBottom}
-          >
-            Stand out yourself
-          </motion.p>
           <div className="max-w-[1200px] w-full">
             <div className="flex flex-col lg:flex-row  items-center justify-between">
               {/* Left: Feature list */}
@@ -262,7 +239,7 @@ const [user,setUser]=useState(null)
                 </p>
                 <div className="flex flex-col md:flex-row gap-4">
                   <Link
-                    href="/pricing"
+                    href="/login"
                     className="flex justify-center flex-row bg-transparent border text-blue-800  w-[60px] h-[30px] md:w-[60px] md:h-[30px] lg:w-[80px] lg:h-[40px] rounded-md md:rounded-lg items-center mt-3 sm:mt-3 xl:mt-3 2xl:mt-3 "
                   >
                     <span className="sf-pro-body leading-4 text-blue-800   text-[10px] xl:text-[14px] xl:font-normal tracking-normal p-0 m-0 ">
@@ -287,31 +264,31 @@ const [user,setUser]=useState(null)
 
         {/* Blog and Case Study section */}
 
-        <section className="home-section-5 flex flex-col items-center w-full lg:p-28 px-6 py-12">
-          <motion.p
+        <section className="bg-[#F9F7FE] flex flex-col items-center w-full lg:p-28 px-6 py-12">
+          <p
             id="title"
             className="sf-pro-headline mb-8 lg:mb-16"
-            // {...slideInFromBottom}
+          
           >
-            Case Studies
-          </motion.p>
+            Find homes you can afford with BuyAbility℠
+          </p>
           <div className="max-w-[1200px] w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
               {[
                 {
-                  icon: "/icons/buy.svg",
+                  icon: "https://www.zillowstatic.com/bedrock/app/uploads/sites/5/2024/04/homepage-spot-agent-lg-1.webp",
                   title: "Buy a home",
                   desc: "Find your place with an immersive photo experience and the most listings, including things you won’t find anywhere else.",
                   btn: "Browse homes",
                 },
                 {
-                  icon: "/icons/sell.svg",
+                  icon: "https://www.zillowstatic.com/bedrock/app/uploads/sites/5/2024/04/homepage-spot-sell-lg-1.webp",
                   title: "Sell a home",
                   desc: "No matter what path you take to sell your home, we can help you navigate a successful sale.",
                   btn: "See your options",
                 },
                 {
-                  icon: "/icons/rent.svg",
+                  icon: "https://www.zillowstatic.com/bedrock/app/uploads/sites/5/2024/04/homepage-spot-rent-lg-1.webp",
                   title: "Rent a home",
                   desc: "We’re creating a seamless online experience – from shopping on the largest rental network, to applying, to paying rent.",
                   btn: "Find rentals",

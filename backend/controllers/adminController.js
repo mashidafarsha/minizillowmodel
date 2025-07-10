@@ -1,14 +1,15 @@
-const Admin = require('../models/Admin');
-const Property = require('../models/Property');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const Admin = require("../models/Admin");
+const Property = require("../models/Property");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const cloudinary = require("../utils/cloudinary");
 
-const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtils');
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../utils/tokenUtils");
 
-
-
-// ✅ Login Admin
+//  Login Admin
 exports.loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
@@ -19,7 +20,6 @@ exports.loginAdmin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(401).json({ msg: "Invalid credentials" });
 
-    // ✅ Pass full admin object
     const accessToken = generateAccessToken(admin);
     const refreshToken = generateRefreshToken(admin);
 
@@ -36,12 +36,11 @@ exports.loginAdmin = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Admin login error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
-// ✅ Refresh Admin Token with rotation
+//  Refresh Admin Token with rotation
 exports.refreshAdminToken = async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ msg: "No refresh token provided" });
@@ -54,7 +53,7 @@ exports.refreshAdminToken = async (req, res) => {
       return res.status(403).json({ msg: "Invalid or expired refresh token" });
     }
 
-    // ✅ Rotate tokens
+    //  Rotate tokens
     const newAccessToken = generateAccessToken(admin);
     const newRefreshToken = generateRefreshToken(admin);
 
@@ -66,59 +65,55 @@ exports.refreshAdminToken = async (req, res) => {
       refreshToken: newRefreshToken,
     });
   } catch (err) {
-    console.error("Admin token refresh error:", err);
     res.status(403).json({ msg: "Token verification failed" });
   }
 };
 
-
-
-
-
 exports.addProperty = async (req, res) => {
-  
-
   try {
-    const { title, location, price, description } = req.body;
-    const file = req.file;
+    const { title, location, price, description, category } = req.body;
+    const files = req.files;
 
-    if (!file) {
-      return res.status(400).json({ success: false, message: "Image is required" });
+    if (!files || files.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "At least one image is required" });
     }
 
-    // Convert file buffer to base64 for Cloudinary
-    const base64 = Buffer.from(file.buffer).toString("base64");
-    const dataUri = `data:${file.mimetype};base64,${base64}`;
+    const uploadedImageUrls = [];
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder: "properties",
-    });
+    for (const file of files) {
+      const base64 = Buffer.from(file.buffer).toString("base64");
+      const dataUri = `data:${file.mimetype};base64,${base64}`;
 
-    // Save to MongoDB
+      const result = await cloudinary.uploader.upload(dataUri, {
+        folder: "properties",
+      });
+
+      uploadedImageUrls.push(result.secure_url);
+    }
+
     const newProperty = await Property.create({
       title,
       location,
       price,
       description,
-      images: [result.secure_url],
+      category,
+      images: uploadedImageUrls,
     });
 
     res.status(200).json({ success: true, property: newProperty });
   } catch (error) {
-    console.error("Error uploading property:", error);
     res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };
 
-
 // Get all properties
 exports.getAllProperties = async (req, res) => {
   try {
-    const properties = await Property.find().sort({ createdAt: -1 }); // latest first
+    const properties = await Property.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, properties });
   } catch (error) {
-    console.error("Get All Properties Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -127,10 +122,10 @@ exports.getAllProperties = async (req, res) => {
 exports.getProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
-    if (!property) return res.status(404).json({ message: "Property not found" });
+    if (!property)
+      return res.status(404).json({ message: "Property not found" });
     res.status(200).json(property);
   } catch (error) {
-    console.error("Get Property Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -139,10 +134,10 @@ exports.getProperty = async (req, res) => {
 exports.deleteProperty = async (req, res) => {
   try {
     const property = await Property.findByIdAndDelete(req.params.id);
-    if (!property) return res.status(404).json({ message: "Property not found" });
+    if (!property)
+      return res.status(404).json({ message: "Property not found" });
     res.status(200).json({ message: "Property deleted successfully" });
   } catch (error) {
-    console.error("Delete Property Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -150,19 +145,36 @@ exports.deleteProperty = async (req, res) => {
 // Update property by ID
 exports.updateProperty = async (req, res) => {
   try {
-    const { title, location, price, description } = req.body;
-    const file = req.file;
-    let updatedFields = { title, location, price, description };
+    const { title, location, price, description, category, existingImages } =
+      req.body;
+    const files = req.files;
 
-    if (file) {
-      // Convert file to base64 and upload to Cloudinary
-      const base64 = Buffer.from(file.buffer).toString("base64");
-      const dataUri = `data:${file.mimetype};base64,${base64}`;
-      const result = await cloudinary.uploader.upload(dataUri, {
-        folder: "properties",
-      });
-      updatedFields.images = [result.secure_url];
+    let updatedFields = { title, location, price, description, category };
+
+    let existing = [];
+
+    if (existingImages) {
+      if (Array.isArray(existingImages)) {
+        existing = existingImages;
+      } else {
+        existing = [existingImages];
+      }
     }
+
+    let newImageUrls = [];
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const base64 = Buffer.from(file.buffer).toString("base64");
+        const dataUri = `data:${file.mimetype};base64,${base64}`;
+        const result = await cloudinary.uploader.upload(dataUri, {
+          folder: "properties",
+        });
+        newImageUrls.push(result.secure_url);
+      }
+    }
+
+    updatedFields.images = [...existing, ...newImageUrls];
 
     const updatedProperty = await Property.findByIdAndUpdate(
       req.params.id,
@@ -170,32 +182,11 @@ exports.updateProperty = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedProperty) return res.status(404).json({ message: "Property not found" });
+    if (!updatedProperty)
+      return res.status(404).json({ message: "Property not found" });
 
     res.status(200).json({ success: true, property: updatedProperty });
   } catch (error) {
-    console.error("Update Property Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
-
-
-
-
-// exports.updateProperty = async (req, res) => {
-//   const updated = await Property.findByIdAndUpdate(req.params.id, req.body, { new: true });
-//   res.json(updated);
-// };
-
-// exports.deleteProperty = async (req, res) => {
-//   await Property.findByIdAndDelete(req.params.id);
-//   res.json({ msg: 'Deleted' });
-// };
-
-// exports.getAllPropertiesForAdmin = async (req, res) => {
-//   const properties = await Property.find();
-//   res.json(properties);
-// };

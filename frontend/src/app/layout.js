@@ -10,16 +10,18 @@ import { usePathname } from 'next/navigation';
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
-  // Check if the current route is under /admin
   const isAdminRoute = pathname.startsWith('/admin');
+  const isLoginRoute = pathname === '/login'; 
+
+  const shouldHideHeaderFooter = isAdminRoute || isLoginRoute;
 
   return (
     <html lang="en" className="font-sans">
       <body className="flex flex-col min-h-screen w-full">
         <ClientProviders>
-          {!isAdminRoute && <Header />}
+          {!shouldHideHeaderFooter && <Header />}
           <main className="flex-grow w-full">{children}</main>
-          {!isAdminRoute && <Footer />}
+          {!shouldHideHeaderFooter && <Footer />}
           <Toaster position="top-right" reverseOrder={false} />
         </ClientProviders>
       </body>

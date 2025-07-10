@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function AllPropertiesPage() {
- 
   const router = useRouter();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +27,7 @@ export default function AllPropertiesPage() {
     const fetchProperties = async () => {
       try {
         const res = await getAllPropertiesApi();
-        setProperties(res.properties || res); 
+        setProperties(res.properties || res);
       } catch (err) {
         console.error("Error fetching properties:", err);
       } finally {
@@ -58,9 +57,7 @@ export default function AllPropertiesPage() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       <AdminSidebar />
-      <main className="flex-1 p-6 md:ml-64">
-        {/* <AdminHeader title="All Properties" /> */}
-
+      <main className="flex-1 p-6 ">
         {loading ? (
           <p>Loading...</p>
         ) : properties.length === 0 ? (
@@ -73,6 +70,7 @@ export default function AllPropertiesPage() {
                 className="bg-white p-4 rounded-lg shadow hover:shadow-md transition"
               >
                 <h3 className="text-lg font-semibold mb-1">{property.title}</h3>
+                <p className="text-sm text-gray-500">{property.category}</p>
                 <p className="text-sm text-gray-500 mb-1">
                   {property.location}
                 </p>
@@ -80,7 +78,7 @@ export default function AllPropertiesPage() {
                   {property.description}
                 </p>
                 <div className="font-bold text-green-600 mb-2">
-                  ${property.price}
+                  AED {property.price}
                 </div>
                 <div className="flex gap-2">
                   <button

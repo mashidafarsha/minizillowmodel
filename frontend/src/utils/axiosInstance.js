@@ -4,12 +4,11 @@ const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const axiosInstance = axios.create({ baseURL });
 
-// ✅ Attach access token to every request
 axiosInstance.interceptors.request.use((config) => {
   const token =
     localStorage.getItem("adminAccessToken") ||
     localStorage.getItem("userAccessToken") ||
-    localStorage.getItem("accessToken"); // fallback
+    localStorage.getItem("accessToken");
 
   console.log("🔐 Attaching token:", token);
 
@@ -20,7 +19,6 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-// ✅ Handle 401 errors and refresh token
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -54,20 +52,20 @@ axiosInstance.interceptors.response.use(
         const newRefreshToken = res.data.refreshToken;
 
         if (accessToken) {
-          // ✅ Store tokens properly
           if (isAdmin) {
             localStorage.setItem("adminAccessToken", accessToken);
-            if (newRefreshToken) localStorage.setItem("adminRefreshToken", newRefreshToken);
+            if (newRefreshToken)
+              localStorage.setItem("adminRefreshToken", newRefreshToken);
           } else {
             localStorage.setItem("userAccessToken", accessToken);
-            if (newRefreshToken) localStorage.setItem("userRefreshToken", newRefreshToken);
+            if (newRefreshToken)
+              localStorage.setItem("userRefreshToken", newRefreshToken);
           }
 
-          // ✅ Also store fallback keys (used by request interceptor)
           localStorage.setItem("accessToken", accessToken);
-          if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+          if (newRefreshToken)
+            localStorage.setItem("refreshToken", newRefreshToken);
 
-          // ✅ Retry original request with new access token
           axiosInstance.defaults.headers.Authorization = `Bearer ${accessToken}`;
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
@@ -84,7 +82,6 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// ✅ Helper to clear all tokens
 function clearAllAuthTokens() {
   localStorage.removeItem("adminAccessToken");
   localStorage.removeItem("adminRefreshToken");
@@ -95,7 +92,6 @@ function clearAllAuthTokens() {
   localStorage.removeItem("admin");
 }
 
-// ✅ Redirect helper
 function redirectToLogin() {
   window.location.href = "/login";
 }
