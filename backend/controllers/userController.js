@@ -10,6 +10,7 @@ const {
 // user signup
 
 exports.signupUser = async (req, res) => {
+ 
   const { name, email, password } = req.body;
 
   const existing = await User.findOne({ email });

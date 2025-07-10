@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 const axiosInstance = axios.create({ baseURL });
+
 
 axiosInstance.interceptors.request.use((config) => {
   const token =
@@ -10,21 +10,14 @@ axiosInstance.interceptors.request.use((config) => {
     localStorage.getItem("userAccessToken") ||
     localStorage.getItem("accessToken");
 
-  const publicRoutes = ["/user/signup", "/user/login", "/admin/login"];
+  console.log("🔐 Attaching token:", token);
 
-  const isPublic = publicRoutes.some(route => config.url?.includes(route));
-
-  if (!isPublic && token) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("🔐 Attaching token:", token);
-  } else {
-    console.log("🚫 No token attached to public route:", config.url);
   }
 
   return config;
 });
-
-
 
 axiosInstance.interceptors.response.use(
   (res) => res,
